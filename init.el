@@ -1,6 +1,13 @@
-;; 插件源
+;;; init.el --- 配置初始化
+;;; Commentary:
+;;; Code:
+;;
+;;插件源
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;;(add-to-list 'package-archives
+;;             '("melpa-stable" . "https://stable.melpa.org/packages/"))
+;;(add-to-list 'package-pinned-packages '(telega . "melpa-stable"))
 (package-initialize)
 
 
@@ -14,7 +21,6 @@
 (setq use-package-verbose t)
 (setq use-package-always-ensure t)
 (setq use-package-always-defer t)
-(setq warning-minimum-level :emergency)
 
 
 ;; 代理配置
@@ -36,14 +42,11 @@
 
 ;; 配置文件快捷键
 (defun open-init-file()
+  "打开配置文件."
   (interactive)
   (find-file "~/.config/emacs/init.el"))
 (global-set-key (kbd "<f1>") 'open-init-file)
 (global-set-key (kbd "C-<f5>") 'load-file)
-
-
-;; 显示最近打开文件数
-(setq recentf-max-menu-items 20)
 
 ;; 关闭滚动条
 (scroll-bar-mode -1)
@@ -84,6 +87,7 @@
 ;; 随时重新加载发生修改过的文件
 (setq load-prefer-newer t)
 
+
 ;; 关闭字体缓存gc
 (setq inhibit-compacting-font-caches nil)
 
@@ -91,12 +95,12 @@
 (setq ring-bell-function 'ignore blink-cursor-mode nil)
 
 ;; 任何地方都使用UTF-8
-(set-charset-priority 'unicode) 
-(setq locale-coding-system   'utf-8)    ; pretty
-(set-terminal-coding-system  'utf-8)    ; pretty
-(set-keyboard-coding-system  'utf-8)    ; pretty
-(set-selection-coding-system 'utf-8)    ; please
-(prefer-coding-system        'utf-8)    ; with sugar on top
+(set-charset-priority 'unicode)
+(setq locale-coding-system   'utf-8)
+(set-terminal-coding-system  'utf-8)
+(set-keyboard-coding-system  'utf-8)
+(set-selection-coding-system 'utf-8)
+(prefer-coding-system        'utf-8)
 (setq default-process-coding-system '(utf-8 . utf-8))
 
 ;; 更友好及平滑的滚动
@@ -121,10 +125,10 @@
 (setq-default fill-column 80)
 
 ;; 让'_'被视为单词的一部分
-(add-hook 'after-change-major-mode-hook (lambda () 
+(add-hook 'after-change-major-mode-hook (lambda ()
                                           (modify-syntax-entry ?_ "w")))
 ;; "-" 同上)
-(add-hook 'after-change-major-mode-hook (lambda () 
+(add-hook 'after-change-major-mode-hook (lambda ()
                                           (modify-syntax-entry ?- "w")))
 ;; 允许插入制表符
 (setq-default indent-tabs-mode nil)
@@ -137,8 +141,8 @@
 
 ;; 内存性能设置
 (if (not (display-graphic-p))
-  ;; increase gc memery
-  (setq gc-cons-threshold (* 8192 8192))
+    ;; increase gc memery
+    (setq gc-cons-threshold (* 8192 8192))
   ;; increase LSP server cache
   (setq read-process-output-max (* 1024 1024 128)))
 
@@ -158,11 +162,48 @@
 (use-package zenburn-theme
   :init (load-theme 'zenburn t))
 (set-face-attribute 'default nil
-  :family "Hack Nerd Font"
-  :height 150
-  :weight 'normal)
+                    :family "Hack Nerd Font"
+                    :height 150
+                    :weight 'normal)
 (set-cursor-color "red")
 
+
+;; Mode Line
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :config
+  (progn (setq doom-modeline-window-width-limit fill-column
+               doom-modeline-project-detection 'project
+               doom-modeline-buffer-file-name-style 'auto
+               doom-modeline-icon (display-graphic-p)
+               doom-modeline-buffer-state-icon t
+               doom-modeline-unicode-fallback nil
+               doom-modeline-minor-modes nil
+               doom-modeline-enable-word-count nil
+               doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode)
+               doom-modeline-workspace-name t
+               doom-modeline-persp-name t
+               doom-modeline-env-version t
+               doom-modeline-env-enable-python t
+               doom-modeline-env-enable-go t
+               doom-modeline-env-enable-rust t
+               doom-modeline-env-python-executable "python3"
+               doom-modeline-env-go-executable "go"
+               doom-modeline-env-rust-executable "rustc")))
+
+
+;; 启动界面
+(use-package dashboard
+  :init (dashboard-setup-startup-hook)
+  :config (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))
+                dashboard-banner-logo-title "MTH's Emacs ."
+                dashboard-set-heading-icons t
+                dashboard-set-file-icons t
+                dashboard-set-navigator t
+                dashboard-items '((recents . 10)
+                                  (projects . 5)
+                                  (bookmarks . 10))))
+         
 
 ;; Emacs Use
 (use-package helpful
@@ -178,16 +219,32 @@
   :hook (emacs-lisp-mode . symbol-overlay-mode))
 
 
+;; 删除空白符
+(use-package hungry-delete
+  :init (global-hungry-delete-mode))
+
+
 ;; Exec Shell
 (use-package exec-path-from-shell)
 (when (memq window-system '(mac ns x))
   (exec-path-from-shell-initialize))
 
 
+;; Telegram
+(use-package telega
+  :load-path "~/.config/emacs/telega.el"
+  :commands (telega)
+  :init (setq telega-proxies
+              '((:server "localhost"
+                         :port "1089"
+                         :enable t
+                         :type (:@type "proxyTypeSocks5")))))
+
+
 ;; Rainbow
 (use-package rainbow-delimiters
   :config
-    (add-hook 'prog-mode-hook 'rainbow-delimiters-mode t))
+  (add-hook 'prog-mode-hook 'rainbow-delimiters-mode t))
 
 
 ;; Undo Tree
@@ -208,8 +265,8 @@
   :config
   (setq recentf-max-saved-items 50
         recentf-max-menu-items 15)
-  (global-set-key (kbd "C-x C-r") 'recentf-open-files)
-  (recentf-mode))
+  (progn (recentf-mode))
+  (global-set-key (kbd "C-x C-r") 'recentf-open-files))
 
 
 ;; Auto Pair Bracket
@@ -229,11 +286,6 @@
 
 ;; Treemacs
 (use-package treemacs
-  :ensure t
-  :defer t
-  :init
-  (with-eval-after-load 'winum
-    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
   :config
   (progn
     (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
@@ -278,10 +330,6 @@
           treemacs-width                         35
           treemacs-workspace-switch-cleanup      nil)
 
-    ;; The default width and height of the icons is 22 pixels. If you are
-    ;; using a Hi-DPI display, uncomment this to double the icon size.
-    ;;(treemacs-resize-icons 44)
-
     (treemacs-follow-mode t)
     (treemacs-filewatch-mode t)
     (treemacs-fringe-indicator-mode 'always)
@@ -296,31 +344,51 @@
         ("M-0"       . treemacs-select-window)
         ("C-x t 1"   . treemacs-delete-other-windows)
         ("C-x t t"   . treemacs)
+        ("<f2>"      . treemacs)
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
         ("C-x t M-t" . treemacs-find-tag)))
 
 (use-package treemacs-evil
-  :after (treemacs evil)
-  :ensure t)
+  :after (treemacs evil))
 
 (use-package treemacs-projectile
-  :after (treemacs projectile)
-  :ensure t)
+  :after (treemacs projectile))
 
 (use-package treemacs-icons-dired
   :after (treemacs dired)
-  :ensure t
   :config (treemacs-icons-dired-mode))
 
 (use-package treemacs-magit
-  :after (treemacs magit)
-  :ensure t)
+  :after (treemacs magit))
 
 (use-package treemacs-persp
   :after (treemacs persp-mode)
-  :ensure t
   :config (treemacs-set-scope-type 'Perspectives))
+
+
+;; ivy
+(use-package counsel)
+(ivy-mode 1)
+(setq ivy-use-virtual-buffers t)
+(setq enable-recursive-minibuffers t)
+(global-set-key "\C-s" 'swiper)
+(global-set-key (kbd "C-c C-r") 'ivy-resume)
+(global-set-key (kbd "<f6>") 'ivy-resume)
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
+(global-set-key (kbd "C-c g") 'counsel-git)
+(global-set-key (kbd "C-c j") 'counsel-git-grep)
+(global-set-key (kbd "C-x l") 'counsel-locate)
+(define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
+
+
+;; 代码检查
+(use-package flycheck
+  :init (global-flycheck-mode)
+  ;;:hook ('after-init #'global-flycheck-mode))
+  )
+(add-hook 'after-init-hook #'global-flycheck-mode)
 
 
 ;; LSP mode
@@ -328,12 +396,15 @@
   :hook ((go-mode . lsp-deferred)
          (typescript-mode . lsp-deferred))
   :custom
-   (lsp-enable-imenu t))
+  (lsp-enable-imenu t))
 
 (use-package lsp-ui
   :config
   (setq lsp-ui-doc-position 'at-point))
 
+(use-package lsp-treemacs
+  :config
+  (progn(lsp-treemacs-sync-mode 1)))
 
 ;; AutoCompany
 (use-package company
@@ -344,12 +415,13 @@
 ;; Python
 (use-package lsp-pyright
   :hook (python-mode . (lambda ()
-                          (require 'lsp-pyright)
-                          (lsp-deferred))))
+                         (require 'lsp-pyright)
+                         (lsp-deferred))))
 
 
 ;; GoLang
 (defun lsp-go-install-save-hooks ()
+  "保存代码自动格式化."
   (add-hook 'before-save-hook #'lsp-format-buffer t t)
   (add-hook 'before-save-hook #'lsp-organize-imports t t))
 (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
@@ -372,7 +444,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(tide zenburn-theme python-mode yaml-mode which-key use-package undo-tree rainbow-mode rainbow-delimiters magit lsp-pyright json-mode exec-path-from-shell dockerfile-mode company-lsp autopair all-the-icons))
+   '(telega lsp-treemacs treemacs-projectile tide zenburn-theme python-mode yaml-mode which-key use-package undo-tree rainbow-mode rainbow-delimiters magit lsp-pyright json-mode exec-path-from-shell dockerfile-mode company-lsp autopair all-the-icons))
  '(safe-local-variable-values '((encoding . utf-8))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -380,3 +452,5 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(aw-leading-char-face ((t (:inherit ace-jump-face-foreground :height 3.0 :foreground "magenta")))))
+(provide 'init)
+;;; init.el ends here
