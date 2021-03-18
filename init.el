@@ -172,16 +172,28 @@
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
   :config
-  (progn (setq doom-modeline-window-width-limit fill-column
+  (progn (setq doom-modeline-height 25
+               doom-modeline-bar-width 3
+               doom-modeline-window-width-limit fill-column
                doom-modeline-project-detection 'project
                doom-modeline-buffer-file-name-style 'auto
                doom-modeline-icon (display-graphic-p)
+               doom-modeline-major-mode-icon t
+               doom-modeline-major-mode-color-icon t
                doom-modeline-buffer-state-icon t
+               doom-modeline-buffer-modification-icon t
                doom-modeline-unicode-fallback nil
                doom-modeline-minor-modes nil
                doom-modeline-enable-word-count nil
                doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode)
+               doom-modeline-buffer-encoding t
+               doom-modeline-checker-simple-format t
+               doom-modeline-number-limit 99
+               doom-modeline-vcs-max-length 12
                doom-modeline-workspace-name t
+               doom-modeline-vcs-max-length 12
+               doom-modeline-lsp t
+               doom-modeline-gnus t
                doom-modeline-persp-name t
                doom-modeline-env-version t
                doom-modeline-env-enable-python t
@@ -189,7 +201,10 @@
                doom-modeline-env-enable-rust t
                doom-modeline-env-python-executable "python3"
                doom-modeline-env-go-executable "go"
-               doom-modeline-env-rust-executable "rustc")))
+               doom-modeline-env-rust-executable "rustc"
+               display-time-24hr-format 1))
+  (display-battery-mode t)
+  (display-time-mode t))
 
 
 ;; 启动界面
@@ -230,6 +245,11 @@
   (exec-path-from-shell-initialize))
 
 
+;; 终端
+(use-package vterm
+  :bind (("C-<f3>" . 'vterm)))
+
+
 ;; Telegram
 (use-package telega
   :load-path "~/.config/emacs/telega.el"
@@ -243,8 +263,7 @@
 
 ;; Rainbow
 (use-package rainbow-delimiters
-  :config
-  (add-hook 'prog-mode-hook 'rainbow-delimiters-mode t))
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 
 ;; Undo Tree
@@ -271,7 +290,7 @@
 
 ;; Auto Pair Bracket
 (use-package autopair
-  :config (autopair-global-mode))
+  :hook (prog-mode . autopair-global-mode))
 
 
 ;; Git
@@ -328,17 +347,7 @@
           treemacs-user-mode-line-format         nil
           treemacs-user-header-line-format       nil
           treemacs-width                         35
-          treemacs-workspace-switch-cleanup      nil)
-
-    (treemacs-follow-mode t)
-    (treemacs-filewatch-mode t)
-    (treemacs-fringe-indicator-mode 'always)
-    (pcase (cons (not (null (executable-find "git")))
-                 (not (null treemacs-python-executable)))
-      (`(t . t)
-       (treemacs-git-mode 'deferred))
-      (`(t . _)
-       (treemacs-git-mode 'simple))))
+          treemacs-workspace-switch-cleanup      nil))
   :bind
   (:map global-map
         ("M-0"       . treemacs-select-window)
@@ -363,8 +372,7 @@
   :after (treemacs magit))
 
 (use-package treemacs-persp
-  :after (treemacs persp-mode)
-  :config (treemacs-set-scope-type 'Perspectives))
+  :after (treemacs persp-mode))
 
 
 ;; ivy
@@ -385,31 +393,62 @@
 
 ;; 代码检查
 (use-package flycheck
-  :init (global-flycheck-mode)
-  ;;:hook ('after-init #'global-flycheck-mode))
-  )
-(add-hook 'after-init-hook #'global-flycheck-mode)
+  :init (global-flycheck-mode))
+
+
+;; 代码片段
+(use-package yasnippet
+  :hook ('prog-mode-hook #'yas-minor-mode))
+(use-package yasnippet-snippets)
 
 
 ;; LSP mode
 (use-package lsp-mode
   :hook ((go-mode . lsp-deferred)
-         (typescript-mode . lsp-deferred))
+         (typescript-mode . lsp-deferred)
+         (rustic-mode . lsp-deferred))
+  :config
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
   :custom
-  (lsp-enable-imenu t))
+  (lsp-rust-analyzer-cargo-watch-command "clippy"))
 
 (use-package lsp-ui
+  :commands lsp-ui-mode
   :config
-  (setq lsp-ui-doc-position 'at-point))
+  (setq lsp-ui-doc-position 'at-point)
+  :custom
+  (lsp-ui-peek-always-show t)
+  (lsp-ui-sideline-show-hover t)
+  (lsp-ui-doc-enable t)
+  (lsp-ui-doc-mode t))
 
 (use-package lsp-treemacs
+  :commands lsp-treemacs-errors-list
   :config
   (progn(lsp-treemacs-sync-mode 1)))
 
+(use-package lsp-ivy
+  :commands lsp-ivy-workspace-symbol)
+
+
+;; Julia
+(use-package julia-mode)
+(use-package lsp-julia
+  :hook (julia-mode . (lambda ()
+                        (require 'lsp-julia)
+                        (lsp-deferred))))
+
+
 ;; AutoCompany
 (use-package company
-  :config
+  :init
   (global-company-mode t))
+
+
+;; Rust
+(use-package rustic
+  :config
+  (setq rustic-format-on-save t))
 
 
 ;; Python
@@ -422,8 +461,8 @@
 ;; GoLang
 (defun lsp-go-install-save-hooks ()
   "保存代码自动格式化."
-  (add-hook 'before-save-hook #'lsp-format-buffer t t)
-  (add-hook 'before-save-hook #'lsp-organize-imports t t))
+  (add-hook 'before-save-hook 'lsp-format-buffer t t)
+  (add-hook 'before-save-hook 'lsp-organize-imports t t))
 (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
 
 
@@ -444,7 +483,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(telega lsp-treemacs treemacs-projectile tide zenburn-theme python-mode yaml-mode which-key use-package undo-tree rainbow-mode rainbow-delimiters magit lsp-pyright json-mode exec-path-from-shell dockerfile-mode company-lsp autopair all-the-icons))
+   '(zenburn-theme yasnippet-snippets yaml-mode which-key use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil tide symbol-overlay rustic rainbow-delimiters lsp-ui lsp-treemacs lsp-pyright json-mode hungry-delete helpful go-mode exec-path-from-shell elisp-demos doom-modeline dockerfile-mode dashboard counsel company autopair alert))
  '(safe-local-variable-values '((encoding . utf-8))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -454,3 +493,4 @@
  '(aw-leading-char-face ((t (:inherit ace-jump-face-foreground :height 3.0 :foreground "magenta")))))
 (provide 'init)
 ;;; init.el ends here
+(put 'narrow-to-region 'disabled nil)
