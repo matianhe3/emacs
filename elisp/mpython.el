@@ -1,4 +1,4 @@
-;;; package --- python模块
+;;; mpython.el --- python模块
 ;;; Commentary:
 ;;; Code:
 

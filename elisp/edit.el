@@ -1,4 +1,4 @@
-;;; package ---  编辑相关
+;;; edit.el ---  编辑相关
 ;;; Commentary:
 ;;; Code:
 
@@ -7,8 +7,8 @@
   :custom
   (mc/always-run-for-all t)
   :bind
-  (("C-M-n" . mc/mark-next-like-this)
-   ("C-M-p" . mc/mark-previous-like-this)
+  (("M-n" . mc/mark-next-like-this)
+   ("M-p" . mc/mark-previous-like-this)
    ("C-M-S-n" . mc/skip-to-next-like-this)
    ("C-M-S-p" . mc/skip-to-previous-like-this)
    ("C-S-n" . mc/unmark-previous-like-this)
@@ -34,15 +34,27 @@
 (use-package expand-region
   :custom
   (expand-region-fast-keys-enabled nil)
-  (expand-region-subword-enabled t)  
-  :bind
-  ("C-t" . er/expand-region))
+  (expand-region-subword-enabled t)
+  :bind (("M-[" . er/expand-region)
+         ("C-(" . er/mark-outside-pairs)))
+
+
+;; 括号配对
+(use-package smartparens
+  :hook (prog-mode . smartparens-mode))
 
 
 ;; 清除空格
 (use-package ws-butler
   :hook ((text-mode . ws-butler-mode)
          (prog-mode . ws-butler-mode)))
+;; 撤销
+(use-package undo-tree
+  :init (global-undo-tree-mode))
+
+;; 快捷键
+(use-package hydra
+  :defer 1)
 
 
 (provide 'edit)

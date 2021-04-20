@@ -1,4 +1,4 @@
-;;; package --- 状态栏
+;;; modeline.el --- 状态栏
 ;;; Commentary:
 ;;; Code:
 

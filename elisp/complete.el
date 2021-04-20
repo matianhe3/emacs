@@ -1,7 +1,82 @@
-;;; package --- 自动完成
+;;; complete.el --- 自动完成
 ;;; Commentary:
 ;;; Code:
 
+
+;; LSP mode
+(use-package lsp-mode
+  :commands lsp
+  :custom ((lsp-headerline-breadcrumb-enable nil)
+           (lsp-rust-analyzer-cargo-watch-command "clippy")
+           (lsp-eldoc-render-all t)
+           (lsp-idle-delay 0.6))
+  :hook
+  (lsp-mode . lsp-enable-which-key-integration))
+
+;; Lsp UI
+(use-package lsp-ui
+  :hook (lsp-mode . lsp-ui-mode)
+  :custom
+  (lsp-ui-peek-always-show t)
+  (lsp-ui-sideline-show-hover t)
+  (lsp-ui-doc-enable nil)
+  (lsp-ui-doc-show))
+
+;; 彩虹美化
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package rainbow-mode
+  :defer t
+  :hook (org-mode
+         emacs-lisp-mode
+         web-mode
+         typescript-mode
+         js2-mode))
+
+(use-package color-identifiers-mode
+  :commands color-identifiers-mode)
+
+;; 语言支持
+(use-package yaml-mode
+  :mode "\\.yaml\\'"
+  :hook
+  (yaml-mode . highlight-indent-guides-mode)
+  (yaml-mode . display-line-numbers-mode))
+
+(use-package gitignore-mode
+  :mode "/\\.gitignore\\'")
+
+(use-package csv-mode
+  :mode "\\.csv\\'"
+  :custom
+  (csv-invisibility-default nil)
+  :hook
+  (csv-mode . csv-align-mode))
+
+
+
+(use-package markdown-mode
+  :mode "\\.md\\'"
+  :custom (markdown-header-scaling t)
+  :bind
+  ( :map markdown-mode-map
+    ("M-n" . markdown-next-visible-heading)
+    ("M-p" . markdown-previous-visible-heading)
+    ("C-M-j" . markdown-follow-thing-at-point)))
+
+
+;; 差异对比
+(use-package dimmer
+  :commands dimmer-mode
+  :custom
+  (dimmer-fraction 0.5)
+  :config
+  (dimmer-configure-company-box)
+  (dimmer-configure-which-key)
+  (dimmer-configure-helm)
+  (dimmer-configure-magit)
+  (dimmer-configure-posframe))
 
 ;; 按键提示
 (use-package which-key-posframe
@@ -23,91 +98,19 @@
    :map emacs-lisp-mode-map
    ("C-c C-d" . helpful-at-point)))
 
-
 ;; 自动完成
 (use-package company
   :custom
   (company-idle-delay 0)
   (company-minimum-prefix-length 1)
-  (company-tooltip-align-annotations t)
-  (company-dabbrev-downcase nil)
-  (company-dabbrev-other-buffers t)
-  :bind
-  ( :map company-active-map
-    ("RET" . nil)
-    ([return] . nil)
-    ("TAB" . company-complete-selection)
-    ("<tab>" . company-complete-selection)
-    ("C-s" . company-complete-selection)
-    ("C-n" . company-select-next)
-    ("C-p" . company-select-previous))
   :hook
-  (dashboard-after-initialize . global-company-mode)
-  :config
-  (add-to-list 'company-begin-commands 'backward-delete-char-untabify)
-
-  ;; Show YASnippet snippets in company
-  (defun fk/company-backend-with-yas (backend)
-    "Add ':with company-yasnippet' to the given company backend."
-    (if (and (listp backend) (member 'company-yasnippet backend))
-        backend
-      (append (if (consp backend)
-                  backend
-                (list backend))
-              '(:with company-yasnippet))))
-
-  (defun fk/company-smart-snippets (fn command &optional arg &rest _)
-    "Do not show yasnippet candidates after dot."
-    (unless (when (and (equal command 'prefix) (> (point) 0))
-              (let* ((prefix (company-grab-symbol))
-                     (point-before-prefix (if (> (- (point) (length prefix) 1) 0)
-                                              (- (point) (length prefix) 1)
-                                            1))
-                     (char (buffer-substring-no-properties point-before-prefix (1+ point-before-prefix))))
-                (string= char ".")))
-      (funcall fn command arg)))
-
-  ;; TODO: maybe show snippets at first?
-  (defun fk/company-enable-snippets ()
-    "Enable snippet suggestions in company by adding ':with
-company-yasnippet' to all company backends."
-    (interactive)
-    (setq company-backends (mapcar 'fk/company-backend-with-yas company-backends))
-    (advice-add 'company-yasnippet :around 'fk/company-smart-snippets))
-  (fk/company-enable-snippets))
-
-
-;; 美化自动完成框
-(use-package company-box
-  :hook (company-mode . company-box-mode))
-
-;; 排序
-(use-package prescient
-  :hook (dashboard-after-initialize . prescient-persist-mode))
-
-(use-package company-prescient
-  :after company
-  :config (company-prescient-mode))
-
+  (dashboard-after-initialize . global-company-mode))
 
 ;; 代码片段
 (use-package yasnippet
-  :custom
-  (yas-indent-line nil)
-  (yas-inhibit-overlay-modification-protection t)
-  :custom-face
-  (yas-field-highlight-face ((t (:inherit region))))
-  :bind*
-  (("C-j" . yas-expand)
-   :map yas-minor-mode-map
-   ("TAB" . nil)
-   ("<tab>" . nil)
-   :map yas-keymap
-   ("TAB" . (lambda () (interactive) (company-abort) (yas-next-field)))
-   ("<tab>" . (lambda () (interactive) (company-abort) (yas-next-field))))
-  :hook
-  (dashboard-after-initialize . yas-global-mode)
-  (snippet-mode . (lambda () (setq-local require-final-newline nil))))
+  :hook (prog-mode . yas-minor-mode)
+  :bind ("C-c y" . 'company-yasnippet)
+  :config (yas-reload-all))
 
 (use-package yasnippet-snippets
   :after yasnippet)

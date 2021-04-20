@@ -1,4 +1,4 @@
-;;; package --- 终端
+;;; terminal.el --- 终端
 ;;; Commentary:
 ;;; Code:
 

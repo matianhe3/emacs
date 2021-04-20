@@ -1,68 +1,112 @@
-;;; package --- 查找相关
+;;; search.el --- 查找相关
 ;;; Commentary:
 ;;; Code:
 
 
 ;; 检索
-(use-package helm
-  :custom
-  (helm-M-x-always-save-history t)
-  (savehist-additional-variables '(extended-command-history))
-  (history-delete-duplicates t)
-  (helm-command-prefix-key nil)
-  :bind
-  (("M-x" . helm-M-x)
-   ("C-x C-f" . helm-find-files)
-   ("C-x C-b" . helm-buffers-list)
-   ("C-x b" . helm-buffers-list)
-   ("C-x C-r" . helm-recentf)
-   ("C-x C-i" . helm-imenu)
-   ("C-x C-j" . helm-imenu)
-   ("M-y" . helm-show-kill-ring))
-  :hook
-  (dashboard-after-initialize . helm-mode)
-  (helm-mode . savehist-mode))
-
-;; helm 按键绑定
-(use-package helm-descbinds
-  :commands helm-descbinds)
-
-;; helm 悬浮
-(use-package helm-posframe
-  :straight (:host github :repo "KaratasFurkan/helm-posframe")
-  :after helm
-  :custom
-  (helm-display-header-line nil)
-  (helm-echo-input-in-header-line t)
-  (helm-posframe-border-color "gray")
-  (helm-posframe-parameters '((left-fringe . 5)
-                              (right-fringe . 5)))
+(use-package ivy
+  :diminish
+  :bind (("C-s" . swiper)
+         :map ivy-minibuffer-map
+         ("TAB" . ivy-alt-done)
+         ("C-f" . ivy-alt-done)
+         ("C-l" . ivy-alt-done)
+         ("C-n" . ivy-next-line)
+         ("C-p" . ivy-previous-line)
+         :map ivy-switch-buffer-map
+         ("C-k" . ivy-previous-line)
+         ("C-l" . ivy-done)
+         ("C-d" . ivy-switch-buffer-kill)
+         :map ivy-reverse-i-search-map
+         ("C-p" . ivy-previous-line)
+         ("C-d" . ivy-reverse-i-search-kill))
+  :init
+  (ivy-mode 1)
   :config
-  (helm-posframe-enable)
-  (remove-hook 'delete-frame-functions 'helm--delete-frame-function))
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-wrap t)
+  (setq ivy-count-format "(%d/%d) ")
+  (setq enable-recursive-minibuffers t)
+  (push '(completion-at-point . ivy--regex-fuzzy) ivy-re-builders-alist) ;; This doesn't seem to work...
+  (push '(swiper . ivy--regex-ignore-order) ivy-re-builders-alist)
+  (push '(counsel-M-x . ivy--regex-ignore-order) ivy-re-builders-alist)
+  (setf (alist-get 'counsel-projectile-ag ivy-height-alist) 15)
+  (setf (alist-get 'counsel-projectile-rg ivy-height-alist) 15)
+  (setf (alist-get 'swiper ivy-height-alist) 15)
+  (setf (alist-get 'counsel-switch-buffer ivy-height-alist) 7))
 
 
-;; 查找显示
-(use-package helm-swoop
+(use-package ivy-hydra
+  :defer t
+  :after hydra)
+
+(use-package ivy-rich
+  :init
+  (ivy-rich-mode 1)
+  :after counsel
+  :config
+  (setq ivy-format-function #'ivy-format-function-line)
+  (setq ivy-rich-display-transformers-list
+        (plist-put ivy-rich-display-transformers-list
+                   'ivy-switch-buffer
+                   '(:columns
+                     ((ivy-rich-candidate (:width 40))
+                      (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right)); return the buffer indicators
+                      (ivy-rich-switch-buffer-major-mode (:width 12 :face warning))          ; return the major mode info
+                      (ivy-rich-switch-buffer-project (:width 15 :face success))             ; return project name using `projectile'
+                      (ivy-rich-switch-buffer-path (:width (lambda (x) (ivy-rich-switch-buffer-shorten-path x (ivy-rich-minibuffer-width 0.3))))))  ; return file path relative to project root or `default-directory' if project is nil
+                     :predicate
+                     (lambda (cand)
+                       (if-let ((buffer (get-buffer cand)))
+                           ;; Don't mess with EXWM buffers
+                           (with-current-buffer buffer
+                             (not (derived-mode-p 'exwm-mode)))))))))
+
+(use-package counsel
+  :demand t
+  :bind (("M-x" . counsel-M-x)
+         ("C-x b" . counsel-ibuffer)
+         ("C-x C-r" . counsel-recentf)
+         ("C-x C-f" . counsel-find-file)
+         ("C-M-l" . counsel-imenu)
+         :map minibuffer-local-map
+         ("C-r" . 'counsel-minibuffer-history))
   :custom
-  (helm-swoop-speed-or-color t)
-  (helm-swoop-split-window-function 'display-buffer)
-  (helm-swoop-min-overlay-length 0)
-  :bind
-  (("M-s" . helm-swoop)
-   :map isearch-mode-map
-   ("M-s" . helm-swoop-from-isearch)
-   :map helm-swoop-map
-   ("M-s" . helm-multi-swoop-all-from-helm-swoop)
-   :map helm-swoop-edit-map
-   ("C-c C-c" . helm-swoop--edit-complete)
-   ("C-c C-k" . helm-swoop--edit-cancel)))
+  (counsel-linux-app-format-function #'counsel-linux-app-format-function-name-only)
+  :config
+  (setq ivy-initial-inputs-alist nil))
 
-;; 检索
-(use-package helm-ag
-  :custom
-  (helm-ag-base-command
-   "rg -S --no-heading --color=never --line-number --max-columns 400"))
+(use-package ivy-posframe
+  :config
+  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
+  (ivy-posframe-mode 1))
+
+
+(use-package ivy-xref
+  :straight t
+  :init (if (< emacs-major-version 27)
+            (setq xref-show-xrefs-function #'ivy-xref-show-xrefs)
+          (setq xref-show-definitions-function #'ivy-xref-show-defs)))
+
+(use-package flx  ;; Improves sorting for fuzzy-matched results
+  :after ivy
+  :defer t
+  :init
+  (setq ivy-flx-limit 10000))
+
+
+;; 排序
+(use-package prescient
+  :after counsel
+  :hook (dashboard-after-initialize . prescient-persist-mode))
+(use-package ivy-prescient
+  :after prescient
+  :config
+  (ivy-prescient-mode 1))
+
+
+(use-package wgrep)
+
 
 ;; 高亮查找
 (use-package anzu
@@ -70,39 +114,9 @@
   :config
   (global-anzu-mode))
 
-;; 用rg查找
-(use-package deadgrep
-  :commands deadgrep
-  :bind
-  ( :map deadgrep-mode-map
-    ("C-c C-e" . deadgrep-edit-mode)))
-
-
-;; 方法跳转
-(use-package xref
-  :custom
-  (xref-prompt-for-identifier nil)
-  :bind
-  ("C-M-j" . xref-find-definitions)
-  ("C-M-k" . xref-pop-marker-stack)
-  ("C-9" . xref-find-definitions)
-  ("C-8" . xref-pop-marker-stack)
-  ("C-M-S-j" . xref-find-definitions-other-window)
-  ("C-M-9" . xref-find-definitions-other-window)
-  ("C-M-r" . xref-find-references))
-
-(use-package helm-xref
-  :after helm xref)
-
-(use-package dumb-jump
-  :custom
-  (dumb-jump-aggressive t))
-
 
 (use-package avy
-  :bind
-  (("M-j" . avy-goto-word-or-subword-1)
-   ("C-M-u" . avy-pop-mark)))
+  :commands (avy-goto-char avy-goto-word-0 avy-goto-line))
 
 
 

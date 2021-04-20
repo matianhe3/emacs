@@ -1,11 +1,13 @@
-;;; package --- 代码检查,格式化相关
+;;; formater.el --- 代码检查,格式化相关
 ;;; Commentary:
 ;;; Code:
 
 
 ;; 代码检查
 (use-package flycheck
-  :init (global-flycheck-mode))
+  :defer t
+  :hook (lsp-mode . flycheck-mode))
+
 
 ;; 标准对齐
 (use-package page-break-lines

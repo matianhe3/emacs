@@ -1,17 +1,21 @@
-;;; package --- js html json 相关
+;;; mweb.el --- js html json 相关
 ;;; Commentary:
 ;;; Code:
 
 
 (use-package json-mode
   :mode ("\\.json\\'" . json-mode))
+
 (use-package json-navigator
   :commands json-navigator-navigate-region)
 
-(use-package company-web
-  :after web-mode
+(use-package web-mode
+  :mode "(\\.\\(html?\\|ejs\\|tsx\\|jsx\\)\\'"
   :config
-  (add-to-list 'company-backends '(company-web-html :with company-yasnippet)))
+  (setq-default web-mode-code-indent-offset 2)
+  (setq-default web-mode-markup-indent-offset 2)
+  (setq-default web-mode-attribute-indent-offset 2))
+
 
 (use-package prettier-js
   :hook
@@ -24,14 +28,16 @@
   :hook
   (web-mode . auto-rename-tag-mode))
 
-(use-package js2-mode
-  :mode "\\.js\\'"
-  :custom
-  (js-indent-level 2)
-  :hook
-  (js2-mode . flycheck-mode)
-  ;;(js2-mode . (lambda () (require 'tree-sitter-langs) (tree-sitter-hl-mode)))
-  (js2-mode . lsp-deferred))
+(use-package apheleia
+  :config
+  (apheleia-global-mode +1))
 
-(provide 'mweb.el)
+
+(use-package typescript-mode
+  :mode "\\.\\(ts\\|tsx\\)\\'"
+  :hook (typescript-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2))
+
+(provide 'mweb)
 ;;; mweb.el ends here

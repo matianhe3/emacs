@@ -35,7 +35,6 @@
           '(("http" . "http://localhost:7890")
             ("https" . "http://localhost:7890")
             ("no_proxy" . "0.0.0.0"))))))
-(toggle-proxy)
 
 
 ;; 包管理工具
@@ -66,7 +65,6 @@
         (expand-file-name (format "emacs-custom-%s.el" (user-uid)) temporary-file-directory)))
 (load custom-file t)
 
-(push "~/.config/emacs/elisp" load-path)
 
 ;; 任何地方都使用UTF-8
 (set-default-coding-systems 'utf-8)
@@ -87,13 +85,11 @@
 (defun open-init-file()
   "打开配置文件."
   (interactive)
-  (dired "~/.config/emacs/elisp"))
+  (dired "~/.config/emacs"))
 (global-set-key (kbd "<f1>") 'open-init-file)
 ;; macOS 不支持 ls目录处理
 (when (string= system-type "darwin")
   (setq dired-use-ls-dired nil))
-
-
 
 
 ;; 更友好及平滑的滚动
@@ -121,6 +117,7 @@
  create-lockfiles nil                  ; .#locked-file-name
  confirm-kill-processes nil            ; exit emacs without asking to kill processes
  backup-by-copying nil                 ; prevent linked files
+ auto-save-default nil
  make-backup-files nil
  visible-bell t
  require-final-newline t               ; always end files with newline
@@ -141,8 +138,7 @@
 (delete-selection-mode)
 (set-fringe-mode 10)
 (show-paren-mode 1)
-(column-number-mode)
-(display-line-numbers-mode 1)
+
 
 
 ;; 让'_'被视为单词的一部分
@@ -151,8 +147,6 @@
 ;; "-" 同上)
 (add-hook 'after-change-major-mode-hook (lambda ()
                                           (modify-syntax-entry ?- "w")))
-
-
 
 
 ;; 文件处理
@@ -170,33 +164,37 @@
 (set-face-attribute 'default nil
                     :font "Fira Mono"
                     :height 170)
-(use-package unicode-fonts
-  :config
-  (unicode-fonts-setup))
+;;(use-package unicode-fonts
+  ;;:config
+  ;;(unicode-fonts-setup))
 (use-package emojify
   :hook (erc-mode . emojify-mode)
   :commands emojify-mode)
 
 
+(push "~/.config/emacs/elisp" load-path)
+;;; 加载模块
 
-;; 加载模块
-(add-to-list 'load-path "~/.config/emacs/elisp/")
+
 (require 'complete)
+(require 'dashboard)
+(require 'docker)
+(require 'edit)
+(require 'file)
 (require 'formater)
-(require 'undo)
+(require 'git)
+(require 'mjulia)
+(require 'mgolang)
 (require 'mlisp)
 (require 'modeline)
-(require 'search)
-(require 'dashboard)
+(require 'mpython)
+(require 'mrust)
+(require 'mweb)
 (require 'mwindow)
 (require 'project)
-(require 'edit)
-(require 'coding)
-(require 'mpython)
-(require 'mgolang)
-(require 'file)
+(require 'search)
 (require 'terminal)
-(require 'mrust)
+
 
 
 ;;; init.el ends here

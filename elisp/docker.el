@@ -1,13 +1,14 @@
-;;; package --- docker配置
+;;; docker.el --- docker配置
 ;;; Commentary:
 ;;; Code:
 
 
-(use-package dockerfile-mode
-  :mode "Dockerfile\\'")
+(use-package docker
+  :commands docker)
 
-(use-package docker-compose-mode
-  :mode "docker-compose\\'")
+(use-package docker-tramp
+  :defer t
+  :after docker)
 
-
+(provide 'docker)
 ;;; docker.el ends here

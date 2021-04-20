@@ -1,4 +1,4 @@
-;;; package --- 启动显示
+;;; dashboard.el --- 启动显示
 ;;; Commentary:
 ;;; Code:
 

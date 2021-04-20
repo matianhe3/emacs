@@ -1,34 +1,20 @@
-;;; package --- 项目管理
+;;; project.el --- 项目管理
 ;;; Commentary:
 ;;; Code:
 
 
 ;; 项目管理
 (use-package projectile
-  :init (projectile-mode +1)
-  :bind (:map projectile-mode-map
-              ("s-p" . projectile-command-map)
-              ("C-c p" . projectile-command-map)))
+  :diminish projectile-mode
+  :config (projectile-mode)
+  :demand t
+  :bind-keymap ("C-c p" . projectile-command-map))
 
-(use-package helm-projectile
-  :custom
-  (helm-projectile-sources-list '(helm-source-projectile-buffers-list
-                                  helm-source-projectile-recentf-list
-                                  helm-source-projectile-files-list
-                                  helm-source-projectile-projects))
-  :bind
-  ("C-x f" . helm-projectile)
-  :hook
-  (projectile-mode . helm-projectile-on))
-
-(use-package treemacs
-  :custom
-  (treemacs-width 20)
-  :bind
-  ("M-0" . treemacs-select-window))
-
-(use-package treemacs-projectile
-  :after treemacs projectile)
+(use-package counsel-projectile
+  :after projectile
+  :bind (("C-M-p" . counsel-projectile-find-file))
+  :config
+  (counsel-projectile-mode))
 
 ;; 工作区
 (use-package perspective
