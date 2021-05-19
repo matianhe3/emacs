@@ -129,6 +129,7 @@
  sentence-end-double-space nil
  indent-tabs-mode nil
  tab-width 4
+ enable-local-variables nil
  mouse-yank-at-point nil)
 (defalias 'yes-or-no-p 'y-or-n-p)
 
